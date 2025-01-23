@@ -61,7 +61,14 @@
 </script>
 
 <div
-  class="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4"
+  style="height: 100dvh"
+  class="flex flex-col items-center justify-center bg-gray-100 p-4"
 >
   <Quiz />
+</div>
+
+<div
+  class="absolute bottom-0 left-0 right-0 w-fit px-3 py-1 opacity-35 font-mono text-sm font-semibold"
+>
+  Questions updated at:
 </div>

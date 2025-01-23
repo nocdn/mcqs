@@ -21,6 +21,7 @@
     })
     .then((data) => {
       questionsAndAnswers = data;
+      console.log(questionsAndAnswers.length);
       isLoading = false;
     })
     .catch((error) => {
@@ -55,7 +56,7 @@
   }
 </script>
 
-<div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-xl mb-5">
+<div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl mb-5">
   {#if isLoading}
     <div class="flex justify-center items-center h-40">
       <div
