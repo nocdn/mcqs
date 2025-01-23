@@ -45,10 +45,10 @@
   }
 
   function getIPAndLogSupabase() {
-    fetch("http://ip-api.com/json/")
+    fetch("https://api.ipify.org?format=json")
       .then((response) => response.json())
       .then((data) => {
-        const ipAddress = data.query;
+        const ipAddress = data.ip;
         const restOfData = data;
         logSupabase(ipAddress, restOfData);
       })
