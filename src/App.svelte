@@ -58,6 +58,21 @@
   }
 
   getIPAndLogSupabase();
+
+  let last_update = $state("");
+  function fetchModifiedTime() {
+    fetch(
+      "https://4mu4p3ymqfloak377n6whzywpy0jcfki.lambda-url.eu-west-2.on.aws/modified"
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        last_update = data.last_update;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+  fetchModifiedTime();
 </script>
 
 <div
@@ -70,5 +85,5 @@
 <div
   class="absolute bottom-0 left-0 right-0 w-fit px-3 py-1 opacity-35 font-mono text-sm font-semibold"
 >
-  Questions updated at: 23/01/2025 18:26
+  Questions updated at: {last_update}
 </div>

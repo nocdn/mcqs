@@ -105,6 +105,7 @@
         {@const setNumber = parseInt(setKey.replace("set_", ""))}
         <div
           class="relative flex flex-col items-start gap-4 rounded-lg border border-input p-3 shadow-sm shadow-black/5 has-[[data-state=checked]]:border-ring"
+          style="border-opacity: 0.5; background-color: white;"
         >
           <div class="flex items-center gap-2">
             <button
@@ -115,6 +116,7 @@
               value={setNumber}
               class="aspect-square size-4 rounded-full border border-input shadow-sm shadow-black/5 outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground after:absolute after:inset-0"
               onclick={() => handleSetChange(setNumber)}
+              style="border-opacity: 0.5; background-color: white;"
             >
               {#if currentSet === setNumber}
                 <span class="flex items-center justify-center text-current">
