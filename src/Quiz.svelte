@@ -165,6 +165,10 @@
       onCheckAnswer={checkAnswer}
     />
 
+    <div class="font-mono text-sm text-gray-600 text-center mt-2">
+      Question {currentQuestionIndex + 1}/{questionsAndAnswers.length}
+    </div>
+
     <Navigation
       {currentQuestionIndex}
       totalQuestions={questionsAndAnswers.length}

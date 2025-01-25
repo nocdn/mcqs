@@ -8,9 +8,7 @@
   import { ArrowLeft } from "lucide-svelte";
 </script>
 
-<div
-  class="flex justify-between item-center w-full max-w-xl bg-white p-5 rounded-lg"
->
+<div class="flex justify-between item-center w-full bg-white p-5 rounded-lg">
   <button
     onclick={onPrev}
     class="px-5 py-2.5 font-mono text-sm font-semibold text-gray-900 bg-white border border-gray-200 rounded-lg flex items-center gap-4
