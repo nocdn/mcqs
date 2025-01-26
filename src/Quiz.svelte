@@ -2,6 +2,8 @@
   import Question from "./Question.svelte";
   import Navigation from "./Navigation.svelte";
 
+  import { Check } from "lucide-svelte";
+
   let currentQuestionIndex = $state(0);
   let answered = $state(false);
   let selectedOption = $state(null);
@@ -10,6 +12,7 @@
   let error = $state(null);
   let sets = $state({});
   let currentSet = $state(1);
+  let answeredQuestions = $state([]);
 
   const lambdaUrl =
     "https://4mu4p3ymqfloak377n6whzywpy0jcfki.lambda-url.eu-west-2.on.aws/";
@@ -76,10 +79,33 @@
     }
   }
 
+  function isQuestionAnswered(questionIndex) {
+    const question = questionsAndAnswers[questionIndex]?.question;
+    return answeredQuestions.includes(question);
+  }
+
+  function loadAnsweredQuestions() {
+    const stored = localStorage.getItem("answeredQuestions");
+    if (stored) {
+      answeredQuestions = JSON.parse(stored);
+    }
+  }
+
+  function saveAnsweredQuestion(question) {
+    if (!answeredQuestions.includes(question)) {
+      answeredQuestions = [...answeredQuestions, question];
+      localStorage.setItem(
+        "answeredQuestions",
+        JSON.stringify(answeredQuestions)
+      );
+    }
+  }
+
   function checkAnswer(option) {
     if (answered) return;
     answered = true;
     selectedOption = option;
+    saveAnsweredQuestion(questionsAndAnswers[currentQuestionIndex].question);
   }
 
   function resetAnswer() {
@@ -89,6 +115,9 @@
 
   // Initial fetch
   fetchSets();
+
+  // Load answered questions when the component mounts
+  loadAnsweredQuestions();
 </script>
 
 <div>
@@ -132,6 +161,7 @@
                 </span>
               {/if}
             </button>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label
               class="text-sm font-medium leading-4 text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
@@ -144,7 +174,7 @@
   </div>
 </div>
 
-<div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl mb-5">
+<div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl mb-5">
   {#if isLoading}
     <div class="flex justify-center items-center h-40">
       <div
@@ -163,11 +193,20 @@
       {answered}
       {selectedOption}
       onCheckAnswer={checkAnswer}
+      wasAnsweredBefore={isQuestionAnswered(currentQuestionIndex)}
     />
 
     <div class="font-mono text-sm text-gray-600 text-center mt-2">
       Question {currentQuestionIndex + 1}/{questionsAndAnswers.length}
     </div>
+
+    {#if isQuestionAnswered(currentQuestionIndex)}
+      <div
+        class="font-mono text-sm text-gray-500 text-center mt-1 flex items-center gap-2 justify-center pl-5"
+      >
+        Question already answered <Check size={16} color="blue" />
+      </div>
+    {/if}
 
     <Navigation
       {currentQuestionIndex}

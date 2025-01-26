@@ -6,6 +6,7 @@
     answered,
     selectedOption,
     onCheckAnswer,
+    wasAnsweredBefore,
   } = $props();
 </script>
 

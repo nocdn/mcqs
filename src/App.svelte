@@ -73,13 +73,25 @@
       });
   }
   fetchModifiedTime();
+
+  let width = $state(0);
+  width = window.innerWidth;
 </script>
 
 <div
   style="height: 100dvh"
   class="flex flex-col gap-4 items-center justify-center bg-gray-100 p-4"
 >
-  <Quiz />
+  {#if width > 700}
+    <Quiz />
+  {:else}
+    <div class="text-center">
+      <h1 class="text-3xl font-bold">Mobile view not yet supported</h1>
+      <p class="text-gray-500 font-mono">
+        This quiz is best viewed on a wider-screen device.
+      </p>
+    </div>
+  {/if}
 </div>
 
 <div
