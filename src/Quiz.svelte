@@ -3,6 +3,7 @@
   import Navigation from "./Navigation.svelte";
 
   import { Check } from "lucide-svelte";
+  import NumberFlow from "@number-flow/svelte";
 
   let currentQuestionIndex = $state(0);
   let answered = $state(false);
@@ -197,7 +198,9 @@
     />
 
     <div class="font-mono text-sm text-gray-600 text-center mt-2">
-      Question {currentQuestionIndex + 1}/{questionsAndAnswers.length}
+      Question <NumberFlow
+        value={currentQuestionIndex + 1}
+      />/{questionsAndAnswers.length}
     </div>
 
     {#if isQuestionAnswered(currentQuestionIndex)}
