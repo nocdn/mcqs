@@ -85,20 +85,41 @@
     return answeredQuestions.includes(question);
   }
 
+  // Add these cookie utility functions
+  function setCookie(name, value, days = 365) {
+    const date = new Date();
+    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+    const expires = `expires=${date.toUTCString()}`;
+    document.cookie = `${name}=${JSON.stringify(value)};${expires};path=/`;
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      const cookieValue = parts.pop().split(";").shift();
+      try {
+        return JSON.parse(cookieValue);
+      } catch {
+        return cookieValue;
+      }
+    }
+    return null;
+  }
+
+  // Replace loadAnsweredQuestions function
   function loadAnsweredQuestions() {
-    const stored = localStorage.getItem("answeredQuestions");
+    const stored = getCookie("answeredQuestions");
     if (stored) {
-      answeredQuestions = JSON.parse(stored);
+      answeredQuestions = stored;
     }
   }
 
+  // Replace saveAnsweredQuestion function
   function saveAnsweredQuestion(question) {
     if (!answeredQuestions.includes(question)) {
       answeredQuestions = [...answeredQuestions, question];
-      localStorage.setItem(
-        "answeredQuestions",
-        JSON.stringify(answeredQuestions)
-      );
+      setCookie("answeredQuestions", answeredQuestions);
     }
   }
 
