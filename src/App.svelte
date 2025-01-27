@@ -80,7 +80,7 @@
 
 <div
   style="height: 100dvh"
-  class="flex flex-col gap-4 items-center justify-center bg-gray-100 p-4"
+  class="flex flex-col gap-4 items-center justify-center bg-gray-100 p-4 motion-opacity-in-0 motion-blur-in-md"
 >
   {#if width > 700}
     <Quiz />

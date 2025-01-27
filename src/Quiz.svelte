@@ -177,7 +177,7 @@
 
 <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl mb-5">
   {#if isLoading}
-    <div class="flex justify-center items-center h-40">
+    <div class="flex justify-center items-center h-96">
       <div
         class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"
       ></div>
@@ -205,7 +205,7 @@
 
     {#if isQuestionAnswered(currentQuestionIndex)}
       <div
-        class="font-mono text-sm text-gray-500 text-center mt-1 flex items-center gap-2 justify-center pl-5"
+        class="motion-opacity-in-0 motion-blur-in-md motion-translate-y-in-100 motion-duration-300 font-mono text-sm text-gray-500 text-center mt-1 flex items-center gap-2 justify-center pl-5"
       >
         Question already answered <Check size={16} color="blue" />
       </div>
