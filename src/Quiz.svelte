@@ -1,6 +1,7 @@
 <script>
   import Question from "./Question.svelte";
   import Navigation from "./Navigation.svelte";
+  import ExplainModal from "./ExplainModal.svelte";
 
   import { Check } from "lucide-svelte";
   import NumberFlow from "@number-flow/svelte";
@@ -71,6 +72,7 @@
       currentQuestionIndex--;
       resetAnswer();
     }
+    explanation = "";
   }
 
   function handleNext() {
@@ -78,6 +80,7 @@
       currentQuestionIndex++;
       resetAnswer();
     }
+    explanation = "";
   }
 
   function isQuestionAnswered(questionIndex) {
@@ -140,6 +143,55 @@
 
   // Load answered questions when the component mounts
   loadAnsweredQuestions();
+
+  let showingExplainModal = $state(false);
+  let explanation = $state("");
+  const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  console.log(geminiApiKey);
+  async function handleExplain() {
+    showingExplainModal = true;
+    const question = questionsAndAnswers[currentQuestionIndex].question;
+    const answer = questionsAndAnswers[currentQuestionIndex].answer;
+
+    const prompt = `Please explain clearly and in simple terms but without being too verbose, why the answer to the question ${question} is ${answer}. Do not use markdown. Just plain text`;
+
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${geminiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gemini-2.5-flash-preview-04-17",
+          reasoning_effort: "high",
+          messages: [{ role: "user", content: prompt }],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "google_search",
+              },
+            },
+          ],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ detail: "failed to parse error response" }));
+      throw new Error(
+        errorData.detail ||
+          `proxy request failed with status: ${response.status}`
+      );
+    }
+    const data = await response.json();
+    console.log("gemini response:", data.choices[0].message.content);
+    explanation = data.choices[0].message.content;
+  }
 </script>
 
 <div>
@@ -196,7 +248,7 @@
   </div>
 </div>
 
-<div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl mb-5">
+<div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-5xl mb-5">
   {#if isLoading}
     <div class="flex justify-center items-center h-96">
       <div
@@ -216,6 +268,7 @@
       {selectedOption}
       onCheckAnswer={checkAnswer}
       wasAnsweredBefore={isQuestionAnswered(currentQuestionIndex)}
+      onExplain={handleExplain}
     />
 
     <div class="font-mono text-sm text-gray-600 text-center mt-2">
@@ -240,3 +293,12 @@
     />
   {/if}
 </div>
+
+{#if showingExplainModal}
+  <ExplainModal
+    {explanation}
+    onDismiss={() => {
+      showingExplainModal = false;
+    }}
+  />
+{/if}

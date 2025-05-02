@@ -7,7 +7,10 @@
     selectedOption,
     onCheckAnswer,
     wasAnsweredBefore,
+    onExplain,
   } = $props();
+
+  import { Sparkles } from "lucide-svelte";
 </script>
 
 <div class="text-lg font-medium mb-5 leading-relaxed">
@@ -34,4 +37,9 @@
       {option}
     </div>
   {/each}
+  <button
+    onclick={onExplain}
+    class="text-left inline-flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer text-sm font-medium ml-1 mt-2"
+    ><Sparkles size={14} /> Explain this</button
+  >
 </div>
