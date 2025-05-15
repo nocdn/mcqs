@@ -33,6 +33,11 @@
   tabindex="0"
 >
   <modal
+    role="button"
+    tabindex="0"
+    onmousedown={(e) => {
+      e.stopPropagation();
+    }}
     class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-1/2 max-w-120 min-w-120 flex flex-col gap-3 overflow-y-scroll {dismissing
       ? 'animate-settings-modal-down'
       : 'animate-settings-modal-up'}"
@@ -40,7 +45,13 @@
     <p
       class="text-md font-medium font-geist-mono flex justify-between opacity-75"
     >
-      Explanation <X size={16} class="cursor-pointer" />
+      Explanation <X
+        size={16}
+        class="cursor-pointer"
+        onmousedown={() => {
+          dismissModal();
+        }}
+      />
     </p>
     {#if explanation === ""}
       <div class="inline-flex gap-2">
