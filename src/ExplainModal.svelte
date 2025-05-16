@@ -45,7 +45,7 @@
     <p
       class="text-md font-medium font-geist-mono flex justify-between opacity-75"
     >
-      Explanation <X
+      EXPLANATION <X
         size={16}
         class="cursor-pointer"
         onmousedown={() => {
