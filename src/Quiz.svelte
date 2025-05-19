@@ -35,6 +35,25 @@
     }
   }
 
+  // Modified shuffleArray to be non-mutating
+  function shuffleArray(inputArray) {
+    // Ensure inputArray is an array before spreading
+    if (!Array.isArray(inputArray)) {
+      return [];
+    }
+    const array = [...inputArray]; // Create a shallow copy
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  const testArray = ["A", "B", "C", "D"];
+  // shuffleArray now returns a new array, testArray itself is not mutated
+  console.log("Shuffled test array (new instance):", shuffleArray(testArray));
+  console.log("Original testArray:", testArray);
+
   async function loadQuestionsForSet(setNumber) {
     try {
       console.log(`Loading questions for set ${setNumber}`);
@@ -42,10 +61,10 @@
       resetQuizState();
 
       const response = await fetch(setsUrl);
-      if (!response.ok) throw new Error("Failed to fetch questions");
+      if (!response.ok) throw new Error("Failed to fetch questions for set");
 
       let setsResponse = await response.json();
-      questionsAndAnswers = setsResponse[`set_${setNumber}`];
+      questionsAndAnswers = setsResponse[`set_${setNumber}`] || [];
       isLoading = false;
       console.log(`Questions loaded for set ${setNumber}`);
     } catch (err) {
@@ -54,6 +73,21 @@
       isLoading = false;
     }
   }
+
+  // Derived state for the current question
+  let currentQuestion = $derived(
+    questionsAndAnswers && questionsAndAnswers.length > currentQuestionIndex
+      ? questionsAndAnswers[currentQuestionIndex]
+      : null
+  );
+
+  // Derived state for shuffled options for the current question
+  let displayedShuffledOptions = $derived.by(() => {
+    if (currentQuestion && currentQuestion.options) {
+      return shuffleArray(currentQuestion.options);
+    }
+    return [];
+  });
 
   function handleSetChange(setNumber) {
     console.log(`Changing set to ${setNumber}`);
@@ -84,8 +118,8 @@
   }
 
   function isQuestionAnswered(questionIndex) {
-    const question = questionsAndAnswers[questionIndex]?.question;
-    return answeredQuestions.includes(question);
+    const questionText = questionsAndAnswers[questionIndex]?.question;
+    return answeredQuestions.includes(questionText);
   }
 
   // Add these cookie utility functions
@@ -119,9 +153,9 @@
   }
 
   // Replace saveAnsweredQuestion function
-  function saveAnsweredQuestion(question) {
-    if (!answeredQuestions.includes(question)) {
-      answeredQuestions = [...answeredQuestions, question];
+  function saveAnsweredQuestion(questionText) {
+    if (!answeredQuestions.includes(questionText)) {
+      answeredQuestions = [...answeredQuestions, questionText];
       setCookie("answeredQuestions", answeredQuestions);
     }
   }
@@ -130,7 +164,9 @@
     if (answered) return;
     answered = true;
     selectedOption = option;
-    saveAnsweredQuestion(questionsAndAnswers[currentQuestionIndex].question);
+    if (currentQuestion) {
+      saveAnsweredQuestion(currentQuestion.question);
+    }
   }
 
   function resetAnswer() {
@@ -149,48 +185,52 @@
   const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
   console.log(geminiApiKey);
   async function handleExplain() {
+    if (!currentQuestion) return;
     showingExplainModal = true;
-    const question = questionsAndAnswers[currentQuestionIndex].question;
-    const answer = questionsAndAnswers[currentQuestionIndex].answer;
+    const question = currentQuestion.question;
+    const answer = currentQuestion.answer;
 
     const prompt = `Please explain clearly and in simple terms but without being too verbose, why the answer to the question ${question} is ${answer}. Do not use markdown. Just plain text`;
 
+    // NOTE: The Gemini API endpoint structure and request body might differ.
+    // This is based on a common pattern for OpenAI-compatible APIs.
+    // Please verify with official Gemini documentation.
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" +
+        geminiApiKey,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${geminiApiKey}`,
         },
         body: JSON.stringify({
-          model: "gemini-2.5-flash-preview-04-17",
-          reasoning_effort: "high",
-          messages: [{ role: "user", content: prompt }],
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "google_search",
-              },
-            },
-          ],
+          contents: [{ parts: [{ text: prompt }] }],
         }),
       }
     );
 
     if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ detail: "failed to parse error response" }));
-      throw new Error(
-        errorData.detail ||
-          `proxy request failed with status: ${response.status}`
-      );
+      const errorData = await response.json().catch(() => ({
+        error: { message: "failed to parse error response" },
+      }));
+      explanation = `Error: ${errorData.error?.message || response.statusText}`;
+      console.error("Gemini API error:", errorData);
+      return;
     }
     const data = await response.json();
-    console.log("gemini response:", data.choices[0].message.content);
-    explanation = data.choices[0].message.content;
+    if (
+      data.candidates &&
+      data.candidates.length > 0 &&
+      data.candidates[0].content &&
+      data.candidates[0].content.parts &&
+      data.candidates[0].content.parts.length > 0
+    ) {
+      explanation = data.candidates[0].content.parts[0].text;
+      console.log("gemini response:", explanation);
+    } else {
+      explanation = "Could not retrieve explanation from Gemini.";
+      console.error("Unexpected Gemini response structure:", data);
+    }
   }
 </script>
 
@@ -261,11 +301,11 @@
     <div class="text-red-500 text-center p-4">
       {error}
     </div>
-  {:else if questionsAndAnswers.length > 0}
+  {:else if questionsAndAnswers.length > 0 && currentQuestion}
     <Question
-      question={questionsAndAnswers[currentQuestionIndex].question}
-      options={questionsAndAnswers[currentQuestionIndex].options}
-      correctAnswer={questionsAndAnswers[currentQuestionIndex].answer}
+      question={currentQuestion.question}
+      options={displayedShuffledOptions}
+      correctAnswer={currentQuestion.answer}
       {answered}
       {selectedOption}
       onCheckAnswer={checkAnswer}
@@ -293,6 +333,10 @@
       onPrev={handlePrev}
       onNext={handleNext}
     />
+  {:else if questionsAndAnswers.length === 0 && !isLoading}
+    <div class="text-gray-500 text-center p-4">
+      No questions available for this set.
+    </div>
   {/if}
 </div>
 
