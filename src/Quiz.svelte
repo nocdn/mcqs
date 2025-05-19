@@ -49,11 +49,6 @@
     return array;
   }
 
-  const testArray = ["A", "B", "C", "D"];
-  // shuffleArray now returns a new array, testArray itself is not mutated
-  console.log("Shuffled test array (new instance):", shuffleArray(testArray));
-  console.log("Original testArray:", testArray);
-
   async function loadQuestionsForSet(setNumber) {
     try {
       console.log(`Loading questions for set ${setNumber}`);
@@ -118,11 +113,12 @@
   }
 
   function isQuestionAnswered(questionIndex) {
+    // Use currentQuestion if available, otherwise fallback to array access
+    // This protects against potential race conditions if currentQuestion is not yet updated
     const questionText = questionsAndAnswers[questionIndex]?.question;
     return answeredQuestions.includes(questionText);
   }
 
-  // Add these cookie utility functions
   function setCookie(name, value, days = 365) {
     const date = new Date();
     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
@@ -144,7 +140,6 @@
     return null;
   }
 
-  // Replace loadAnsweredQuestions function
   function loadAnsweredQuestions() {
     const stored = getCookie("answeredQuestions");
     if (stored) {
@@ -152,7 +147,6 @@
     }
   }
 
-  // Replace saveAnsweredQuestion function
   function saveAnsweredQuestion(questionText) {
     if (!answeredQuestions.includes(questionText)) {
       answeredQuestions = [...answeredQuestions, questionText];
@@ -174,62 +168,65 @@
     selectedOption = null;
   }
 
-  // Initial fetch
   fetchSets();
-
-  // Load answered questions when the component mounts
   loadAnsweredQuestions();
 
   let showingExplainModal = $state(false);
   let explanation = $state("");
   const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  console.log(geminiApiKey);
+
   async function handleExplain() {
-    if (!currentQuestion) return;
+    if (!currentQuestion) {
+      explanation = "Cannot explain: No current question loaded.";
+      showingExplainModal = true;
+      return;
+    }
     showingExplainModal = true;
+    explanation = "Generating explanation..."; // Provide initial feedback
+
     const question = currentQuestion.question;
     const answer = currentQuestion.answer;
 
     const prompt = `Please explain clearly and in simple terms but without being too verbose, why the answer to the question ${question} is ${answer}. Do not use markdown. Just plain text`;
 
-    // NOTE: The Gemini API endpoint structure and request body might differ.
-    // This is based on a common pattern for OpenAI-compatible APIs.
-    // Please verify with official Gemini documentation.
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" +
-        geminiApiKey,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      }
-    );
+    try {
+      const response = await fetch(
+        "https://api.perplexity.ai/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_PERPLEXITY_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "sonar-pro",
+            messages: [{ role: "user", content: prompt }],
+          }),
+        }
+      );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        error: { message: "failed to parse error response" },
-      }));
-      explanation = `Error: ${errorData.error?.message || response.statusText}`;
-      console.error("Gemini API error:", errorData);
-      return;
-    }
-    const data = await response.json();
-    if (
-      data.candidates &&
-      data.candidates.length > 0 &&
-      data.candidates[0].content &&
-      data.candidates[0].content.parts &&
-      data.candidates[0].content.parts.length > 0
-    ) {
-      explanation = data.candidates[0].content.parts[0].text;
-      console.log("gemini response:", explanation);
-    } else {
-      explanation = "Could not retrieve explanation from Gemini.";
-      console.error("Unexpected Gemini response structure:", data);
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "failed to parse error response" })); // Reverted error parsing structure
+        // Set explanation to the error message instead of throwing, to display in modal
+        explanation = `Error: ${errorData.detail || `Proxy request failed with status: ${response.status}`}`;
+        console.error(
+          "Gemini API error:",
+          errorData.detail || response.statusText
+        );
+        return;
+      }
+      const data = await response.json();
+      // Reverted success response parsing structure
+      explanation = data.choices[0].message.content;
+      let citations = data.citations || [];
+      console.log("citations:", citations);
+      console.log("pplx response:", explanation);
+    } catch (err) {
+      explanation = `An error occurred: ${err.message}`;
+      console.error("Error in handleExplain:", err);
     }
   }
 </script>
