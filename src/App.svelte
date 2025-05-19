@@ -35,9 +35,3 @@
     </div>
   {/if}
 </div>
-
-<div
-  class="absolute bottom-0 left-0 right-0 w-fit px-3 py-1 opacity-35 font-mono text-sm font-semibold"
->
-  Questions updated at: {last_update}
-</div>
