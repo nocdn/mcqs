@@ -182,7 +182,7 @@
       return;
     }
     showingExplainModal = true;
-    explanation = "Generating explanation..."; // Provide initial feedback
+    explanation = "";
 
     const question = currentQuestion.question;
     const answer = currentQuestion.answer;
