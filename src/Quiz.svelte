@@ -277,7 +277,7 @@
               class="text-sm font-medium leading-4 text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               {setNumber === 6
-                ? "Language and Development"
+                ? "Perception and Cognition"
                 : `Set ${setNumber}`}
             </label>
           </div>
